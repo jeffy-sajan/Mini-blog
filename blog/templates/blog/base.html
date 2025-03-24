@@ -238,6 +238,22 @@
                             New Post
                         </a>
                     </li>
+                    
+                    {% if not user.profile %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'blog:profile-update' %}">
+                            <i class="bi bi-person-plus"></i>
+                            Create Profile
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'blog:blogger-detail' user.pk %}">
+                            <i class="bi bi-person"></i>
+                            View Profile
+                        </a>
+                    </li>
+                    {% endif %}
                 {% endif %}
             </ul>
         </div>

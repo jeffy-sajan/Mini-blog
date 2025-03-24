@@ -2,6 +2,65 @@
 
 {% block title %}{{ post.title }}{% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const saveButton = document.getElementById("saveButton");
+    if (!saveButton) return;
+
+    function updateButtonState(isSaved) {
+        const icon = saveButton.querySelector("i");
+        const text = saveButton.querySelector("span");
+        
+        if (isSaved) {
+            icon.className = "bi bi-bookmark-check me-2";
+            text.textContent = "Saved";
+            saveButton.classList.remove("btn-outline-primary");
+            saveButton.classList.add("btn-primary");
+        } else {
+            icon.className = "bi bi-bookmark-plus me-2";
+            text.textContent = "Save for Later";
+            saveButton.classList.remove("btn-primary");
+            saveButton.classList.add("btn-outline-primary");
+        }
+    }
+
+    saveButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        
+        const postId = this.getAttribute("data-post-id");
+        const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+        
+        fetch(`/post/${postId}/save/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            } else {
+                return response.json();
+            }
+        })
+        .then(data => {
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
+            updateButtonState(data.saved);
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("An error occurred while saving the post.");
+        });
+    });
+});
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
     <div class="card shadow mb-4">
@@ -18,6 +77,7 @@
             <div class="card-text mb-4">
                 {{ post.content|linebreaks }}
             </div>
+
             {% if user == post.author %}
                 <div class="d-flex gap-3 mb-4">
                     <a href="{% url 'blog:post-update' post.pk %}" class="btn btn-outline-primary">
@@ -29,15 +89,13 @@
                 </div>
             {% endif %}
             {% if user.is_authenticated %}
-                <div id="saveButtonContainer" class="mb-4">
+                <div class="mb-4">
                     <form action="{% url 'blog:save-post' post.pk %}" method="post" class="d-inline">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-primary" id="saveButton">
-                            {% if saved %}
-                                <i class="bi bi-bookmark-check me-2"></i> Saved
-                            {% else %}
-                                <i class="bi bi-bookmark-plus me-2"></i> Save for Later
-                            {% endif %}
+                        <button type="button" class="btn {% if saved %}btn-primary{% else %}btn-outline-primary{% endif %}" 
+                                id="saveButton" data-post-id="{{ post.pk }}">
+                            <i class="bi {% if saved %}bi-bookmark-check{% else %}bi-bookmark-plus{% endif %} me-2"></i>
+                            <span>{% if saved %}Saved{% else %}Save for Later{% endif %}</span>
                         </button>
                     </form>
                 </div>
@@ -95,5 +153,3 @@
         </a>
     </div>
 {% endblock %}
-
-{% block extra_js %}{% endblock %}

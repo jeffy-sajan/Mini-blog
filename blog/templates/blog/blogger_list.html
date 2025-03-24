@@ -2,48 +2,223 @@
 
 {% block title %}Bloggers{% endblock %}
 
-{% block content %}
-<div class="container my-4">
-    <h2 class="mb-4">Bloggers</h2>
+{% block extra_css %}
+<style>
+    .blogger-list {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
     
-    {% if bloggers %}
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    .blogger-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        width: 95%;
+        max-width: 280px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        backdrop-filter: blur(5px);
+        background: rgba(255, 255, 255, 0.95);
+    }
+    
+    .blogger-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .blogger-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin: -40px auto 1.2rem;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        background: #fff;
+    }
+    
+    .blogger-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.8rem;
+        text-align: center;
+    }
+    
+    .blogger-bio {
+        color: #718096;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        text-align: center;
+        font-weight: 400;
+    }
+    
+    .posts-count {
+        font-size: 0.85rem;
+        color: #718096;
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: center;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .posts-count i {
+        color: #4299e1;
+    }
+    
+    .social-links {
+        margin-top: 0.8rem;
+        text-align: center;
+    }
+    
+    .social-links a {
+        color: #4299e1;
+        margin-right: 0.8rem;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+    
+    .social-links a:hover {
+        color: #2b6cb0;
+        transform: translateY(-2px);
+    }
+    
+    /* Header Styles */
+    .blogger-list-header {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        padding: 2rem 0;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+    
+    .blogger-list-header h2 {
+        color: white;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .blogger-list-header p {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.1rem;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 0;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #a0aec0;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state p {
+        color: #718096;
+        font-size: 1.1rem;
+    }
+    
+    /* Mobile Styles */
+    @media (max-width: 768px) {
+        .blogger-list {
+            padding: 1.5rem 0;
+        }
+        
+        .blogger-card {
+            width: 98%;
+            max-width: 260px;
+            margin: 0 auto;
+            padding: 1.2rem;
+        }
+        
+        .blogger-avatar {
+            width: 70px;
+            height: 70px;
+            margin: -35px auto 1rem;
+        }
+        
+        .blogger-name {
+            font-size: 1rem;
+        }
+        
+        .blogger-bio {
+            font-size: 0.85rem;
+        }
+        
+        .posts-count {
+            font-size: 0.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container blogger-list">
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8 text-center blogger-list-header">
+            <h2 class="mb-2">Meet Our Bloggers</h2>
+            <p class="mb-0">Discover the talented writers behind our amazing content</p>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% if not bloggers %}
+            <div class="col-12 empty-state">
+                <i class="bi bi-people"></i>
+                <p>No bloggers found.</p>
+            </div>
+        {% else %}
             {% for blogger in bloggers %}
             <div class="col">
-                <div class="card h-100">
+                <div class="card h-100 blogger-card">
                     <div class="card-body d-flex flex-column">
                         {% if blogger.profile.profile_picture %}
                             <img src="{{ blogger.profile.profile_picture.url }}" 
-                                 class="rounded-circle mb-3" 
-                                 style="width: 100px; height: 100px; object-fit: cover;" 
+                                 class="blogger-avatar" 
                                  alt="{{ blogger.username }}'s Profile Picture">
                         {% else %}
-                            <i class="bi bi-person-circle" style="font-size: 5rem; color: #6c757d;"></i>
+                            <div class="blogger-avatar d-flex align-items-center justify-content-center bg-light rounded-circle">
+                                <i class="bi bi-person-circle" style="font-size: 3.5rem; color: #4299e1;"></i>
+                            </div>
                         {% endif %}
-                        <h3 class="card-title mb-3">
-                            <a href="{% url 'blog:blogger-detail' blogger.pk %}" class="text-decoration-none">
+                        
+                        <h3 class="blogger-name">
+                            {% if request.user.is_authenticated %}
+                                <a href="{% url 'blog:blogger-detail' blogger.pk %}" class="stretched-link text-decoration-none">
+                                    {{ blogger.get_full_name|default:blogger.username }}
+                                </a>
+                            {% else %}
                                 {{ blogger.get_full_name|default:blogger.username }}
-                            </a>
+                            {% endif %}
                         </h3>
+                        
                         {% if blogger.profile.bio %}
-                            <p class="card-text mb-3">{{ blogger.profile.bio|truncatewords:20 }}</p>
+                            <p class="blogger-bio">{{ blogger.profile.bio|truncatewords:15 }}</p>
                         {% endif %}
-                        <div class="mt-auto">
-                            <small class="text-muted">
-                                {{ blogger.post_count }} posts
-                            </small>
+                        
+                        {% if blogger.profile.social_link %}
+                            <div class="social-links">
+                                <a href="{{ blogger.profile.social_link }}" target="_blank" rel="noopener noreferrer">
+                                </a>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="posts-count">
+                            <i class="bi bi-journal-text"></i>
+                            {{ blogger.post_count }} Posts
                         </div>
                     </div>
                 </div>
             </div>
             {% endfor %}
-        </div>
-    {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-people display-4 mb-3"></i>
-            <h3 class="mb-3">No Bloggers Found</h3>
-            <p class="text-muted">Be the first to create a blog post!</p>
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

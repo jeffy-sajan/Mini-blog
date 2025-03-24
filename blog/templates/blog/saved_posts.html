@@ -3,43 +3,83 @@
 {% block title %}Saved Posts{% endblock %}
 
 {% block content %}
-<div class="container my-4">
+<div class="container mt-4">
     <h2 class="mb-4">Saved Posts</h2>
     
     {% if saved_posts %}
         <div class="row">
             {% for saved in saved_posts %}
-            <div class="col-md-6 mb-4">
+            <div class="col-md-6 mb-4" id="savedPost-{{ saved.post.id }}">
                 <div class="card">
                     <div class="card-body">
                         <h3 class="card-title">
-                            <a href="{{ saved.post.get_absolute_url }}" class="text-decoration-none">
+                            <a href="{% url 'blog:post-detail' saved.post.pk %}" class="text-decoration-none">
                                 {{ saved.post.title }}
                             </a>
                         </h3>
-                        <p class="card-text">{{ saved.post.content|truncatewords:50 }}</p>
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <i class="bi bi-person-circle me-2"></i>
+                                <a href="{% url 'blog:blogger-detail' saved.post.author.pk %}" class="text-decoration-none">
+                                    {{ saved.post.author.get_full_name|default:saved.post.author.username }}
+                                </a>
+                            </div>
                             <small class="text-muted">
                                 Saved on {{ saved.date_saved|date:"F d, Y" }}
                             </small>
-                            <form action="{% url 'blog:save-post' saved.post.id %}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                    <i class="bi bi-bookmark-x"></i> Remove from Saved
-                                </button>
-                            </form>
                         </div>
+                        <form action="{% url 'blog:save-post' saved.post.id %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger remove-save-button" 
+                                    data-post-id="{{ saved.post.id }}">
+                                <i class="bi bi-bookmark-x"></i> Remove from Saved
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
             {% endfor %}
         </div>
     {% else %}
-        <div class="text-center py-5">
-            <i class="bi bi-bookmark-heart display-4 mb-3"></i>
-            <h3 class="mb-3">No Saved Posts</h3>
-            <p class="text-muted">You haven't saved any posts yet. Start saving posts you want to read later!</p>
+        <div class="text-center py-4">
+            <i class="bi bi-bookmark-heart display-4 text-muted mb-3 d-block"></i>
+            <p class="text-muted mb-0">No saved posts yet. Save posts to see them here!</p>
         </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".remove-save-button").forEach(button => {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
+            
+            const postId = this.getAttribute("data-post-id");
+            const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+            const postCard = document.getElementById(`savedPost-${postId}`);
+
+            fetch(`/post/${postId}/save/`, {
+                method: "POST",
+                headers: { 
+                    "X-CSRFToken": csrfToken,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+                if (data.saved === false) {
+                    postCard.remove();
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    });
+});
+</script>
 {% endblock %}

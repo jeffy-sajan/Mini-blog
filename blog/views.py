@@ -53,20 +53,27 @@ def blog_home(request):
     posts = paginator.get_page(page)
     return render(request, 'blog/blog_home.html', {'posts': posts, 'page_obj': posts})
 
-@login_required
+@require_http_methods(["GET", "POST"])
 def post_detail(request, pk):
     post = get_object_or_404(Post, pk=pk)
-    saved = SavedPost.objects.filter(user=request.user, post=post).exists()
-    comments = post.comments.all()
+    comments = post.comments.filter(active=True)
+    
+    # Check if post is saved by current user
+    saved = False
+    if request.user.is_authenticated:
+        saved = SavedPost.objects.filter(user=request.user, post=post).exists()
     
     if request.method == 'POST':
+        if not request.user.is_authenticated:
+            messages.error(request, 'Please login to add comments')
+            return redirect('blog:login', next=request.path)
+        
         form = CommentForm(request.POST)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.post = post
             comment.author = request.user
             comment.save()
-            messages.success(request, 'Your comment has been added!')
             return redirect('blog:post-detail', pk=post.pk)
     else:
         form = CommentForm()
@@ -75,6 +82,7 @@ def post_detail(request, pk):
         'post': post,
         'comments': comments,
         'form': form,
+        'user_can_comment': request.user.is_authenticated,
         'saved': saved
     })
 
@@ -143,58 +151,58 @@ def post_delete(request, pk):
     return render(request, 'blog/post_confirm_delete.html', {'post': post})
 
 @login_required(login_url=reverse_lazy('blog:login'))
+@require_http_methods(["GET", "POST"])
 def add_comment(request, post_pk):
-    try:
-        post = get_object_or_404(Post, pk=post_pk)
-    except Post.DoesNotExist:
-        return HttpResponse("Post does not exist", status=404)
+    post = get_object_or_404(Post, pk=post_pk)
     
+    if not request.user.is_authenticated:
+        messages.warning(request, 'Please log in to comment.')
+        return redirect('blog:login')
+        
     if request.method == 'POST':
         form = CommentForm(request.POST)
         if form.is_valid():
-            try:
-                comment = form.save(commit=False)
-                comment.post = post
-                comment.author = request.user
-                comment.save()
-                messages.success(request, 'Your comment has been added!')
-                return redirect('blog:post-detail', pk=post.pk)
-            except Exception as e:
-                logger.error(f"Error in add_comment: {str(e)}")
-                messages.error(request, 'Failed to add comment')
-        else:
-            messages.error(request, 'Invalid form data')
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.author = request.user
+            comment.save()
+            messages.success(request, 'Your comment has been added!')
+            return redirect('blog:post-detail', pk=post.pk)
     else:
         form = CommentForm()
     
-    return render(request, 'blog/add_comment.html', {'form': form, 'post': post})
+    return render(request, 'blog/add_comment.html', {
+        'post': post,
+        'form': form
+    })
+
+@login_required
+@require_http_methods(["GET"])
+def is_post_saved(request, post_pk):
+    post = get_object_or_404(Post, pk=post_pk)
+    saved = SavedPost.objects.filter(user=request.user, post=post).exists()
+    return JsonResponse({'saved': saved})
 
 @login_required
 def save_post(request, post_pk):
-    if request.method == 'POST':
-        try:
-            post = get_object_or_404(Post, id=post_pk)
-        except Post.DoesNotExist:
-            return HttpResponse("Post does not exist", status=404)
-        
-        # Check if post is already saved by this user
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
+    
+    try:
+        post = get_object_or_404(Post, pk=post_pk)
         saved_post = SavedPost.objects.filter(user=request.user, post=post).first()
         
         if saved_post:
-            # Post is already saved, remove it
             saved_post.delete()
             saved = False
         else:
-            # Post is not saved, save it
             SavedPost.objects.create(user=request.user, post=post)
             saved = True
+            
+        return JsonResponse({'saved': saved})
         
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return JsonResponse({'saved': saved})
-        else:
-            return redirect('blog:post-detail', pk=post_pk)
-
-    return redirect('blog:post-detail', pk=post_pk)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 def saved_posts(request):
@@ -204,20 +212,13 @@ def saved_posts(request):
 @login_required
 @require_http_methods(["GET"])
 def blogger_detail(request, pk):
-    try:
-        blogger = User.objects.get(pk=pk)
-        posts = Post.objects.filter(author=blogger).order_by('-date_posted')
-        saved_posts = SavedPost.objects.filter(user=request.user).select_related('post') if request.user.is_authenticated else None
-        
-        context = {
-            'blogger': blogger,
-            'posts': posts,
-            'saved_posts': saved_posts
-        }
-        
-        return render(request, 'blog/blogger_detail.html', context)
-    except User.DoesNotExist:
-        raise Http404("Blogger does not exist")
+    blogger = get_object_or_404(User, pk=pk)
+    posts = Post.objects.filter(author=blogger).order_by('-date_posted')
+    
+    return render(request, 'blog/blogger_detail.html', {
+        'blogger': blogger,
+        'posts': posts
+    })
 
 @login_required
 @require_http_methods(["GET"])
@@ -227,13 +228,10 @@ def blogger_list(request):
         is_superuser=False,
         profile__isnull=False
     ).annotate(
-        posts_count=Count('post'),
-        latest_post=Max('post__date_posted')
-    ).order_by('-latest_post').distinct()
+        post_count=Count('post')
+    ).order_by('-post_count')
     
-    return render(request, 'blog/blogger_list.html', {
-        'bloggers': bloggers
-    })
+    return render(request, 'blog/blogger_list.html', {'bloggers': bloggers})
 
 @login_required
 @require_http_methods(["GET", "POST"])

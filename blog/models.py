@@ -36,6 +36,7 @@ class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     date_posted = models.DateTimeField(default=timezone.now)
+    active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['-date_posted']

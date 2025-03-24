@@ -1,0 +1,45 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Saved Posts{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-4">Saved Posts</h2>
+    
+    {% if saved_posts %}
+        <div class="row">
+            {% for saved in saved_posts %}
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            <a href="{{ saved.post.get_absolute_url }}" class="text-decoration-none">
+                                {{ saved.post.title }}
+                            </a>
+                        </h3>
+                        <p class="card-text">{{ saved.post.content|truncatewords:50 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                Saved on {{ saved.date_saved|date:"F d, Y" }}
+                            </small>
+                            <form action="{% url 'blog:save-post' saved.post.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-bookmark-x"></i> Remove from Saved
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-bookmark-heart display-4 mb-3"></i>
+            <h3 class="mb-3">No Saved Posts</h3>
+            <p class="text-muted">You haven't saved any posts yet. Start saving posts you want to read later!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

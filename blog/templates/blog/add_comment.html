@@ -1,0 +1,48 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Add Comment - {{ post.title }}{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-header bg-transparent">
+        <h1 class="h4 mb-0">Add Comment</h1>
+    </div>
+    <div class="card-body">
+        <div class="mb-4">
+            <h2 class="h5 mb-2">Commenting on:</h2>
+            <a href="{% url 'blog:post-detail' post.pk %}" class="text-decoration-none">
+                {{ post.title }}
+            </a>
+            <div class="text-muted small mt-1">
+                <i class="bi bi-person-circle me-1"></i>
+                <a href="{% url 'blog:blogger-detail' post.author.pk %}" class="text-decoration-none text-muted">
+                    {{ post.author.get_full_name|default:post.author.username }}
+                </a>
+                <i class="bi bi-calendar3 ms-2 me-1"></i>
+                {{ post.date_posted|date:"F d, Y" }}
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                {{ form.content.label_tag }}
+                {{ form.content }}
+                {% if form.content.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.content.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-send me-2"></i>Post Comment
+                </button>
+                <a href="{% url 'blog:post-detail' post.pk %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

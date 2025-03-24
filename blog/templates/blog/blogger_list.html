@@ -1,0 +1,49 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Bloggers{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-4">Bloggers</h2>
+    
+    {% if bloggers %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for blogger in bloggers %}
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        {% if blogger.profile.profile_picture %}
+                            <img src="{{ blogger.profile.profile_picture.url }}" 
+                                 class="rounded-circle mb-3" 
+                                 style="width: 100px; height: 100px; object-fit: cover;" 
+                                 alt="{{ blogger.username }}'s Profile Picture">
+                        {% else %}
+                            <i class="bi bi-person-circle" style="font-size: 5rem; color: #6c757d;"></i>
+                        {% endif %}
+                        <h3 class="card-title mb-3">
+                            <a href="{% url 'blog:blogger-detail' blogger.pk %}" class="text-decoration-none">
+                                {{ blogger.get_full_name|default:blogger.username }}
+                            </a>
+                        </h3>
+                        {% if blogger.profile.bio %}
+                            <p class="card-text mb-3">{{ blogger.profile.bio|truncatewords:20 }}</p>
+                        {% endif %}
+                        <div class="mt-auto">
+                            <small class="text-muted">
+                                {{ blogger.post_count }} posts
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-people display-4 mb-3"></i>
+            <h3 class="mb-3">No Bloggers Found</h3>
+            <p class="text-muted">Be the first to create a blog post!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

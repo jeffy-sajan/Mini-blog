@@ -1,0 +1,114 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Update Profile{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h4 mb-0">Update Profile</h2>
+                        <a href="{% url 'blog:blogger-detail' user.pk %}" 
+                           class="btn btn-outline-secondary btn-sm rounded-pill px-4">
+                            <i class="bi bi-arrow-left me-2"></i>Back
+                        </a>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-4">
+                            <div class="col-md-4 text-center">
+                                <div class="profile-picture-container mb-3">
+                                    {% if profile.profile_picture %}
+                                        <img src="{{ profile.profile_picture.url }}" 
+                                             class="rounded-circle shadow-sm" 
+                                             style="width: 150px; height: 150px; object-fit: cover;" 
+                                             alt="Profile Picture">
+                                    {% else %}
+                                        <i class="bi bi-person-circle" style="font-size: 7rem; color: #6c757d;"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Profile Picture</label>
+                                    <div class="input-group">
+                                        {{ form.profile_picture }}
+                                        <span class="input-group-text">Upload</span>
+                                    </div>
+                                    <div class="form-text text-muted small mt-2">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Recommended size: 400x400px. Supported formats: JPG, PNG
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.bio.id_for_label }}" class="form-label">Bio</label>
+                                    <div class="form-text text-muted small mb-2">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Tell us about yourself (max 500 characters)
+                                    </div>
+                                    {{ form.bio }}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="{{ form.social_link.id_for_label }}" class="form-label">Social Link</label>
+                                    <div class="form-text text-muted small mb-2">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Add your social media profile URL (optional)
+                                    </div>
+                                    <div class="input-group">
+                                        {{ form.social_link }}
+                                        <span class="input-group-text">
+                                            <i class="bi bi-link-45deg"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                <i class="bi bi-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add image preview functionality
+    document.getElementById('{{ form.profile_picture.id_for_label }}').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.querySelector('.rounded-circle');
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Form validation
+    (function () {
+        'use strict'
+        const forms = document.querySelectorAll('.needs-validation')
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+</script>
+{% endblock %}

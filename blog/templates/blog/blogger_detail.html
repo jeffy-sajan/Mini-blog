@@ -1,0 +1,79 @@
+{% extends "blog/base.html" %}
+
+{% block title %}{{ blogger.get_full_name|default:blogger.username }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if blogger.profile.profile_picture %}
+                        <img src="{{ blogger.profile.profile_picture.url }}" 
+                             class="rounded-circle mb-3" 
+                             style="width: 150px; height: 150px; object-fit: cover;" 
+                             alt="{{ blogger.username }}'s Profile Picture">
+                    {% else %}
+                        <i class="bi bi-person-circle" style="font-size: 7rem; color: #6c757d;"></i>
+                    {% endif %}
+                    <h2 class="card-title mb-3">{{ blogger.get_full_name|default:blogger.username }}</h2>
+                    {% if blogger.profile.social_link %}
+                        <a href="{{ blogger.profile.social_link }}" 
+                           class="btn btn-outline-primary btn-sm mb-3" 
+                           target="_blank">
+                            <i class="bi bi-link-45deg me-2"></i>Follow
+                        </a>
+                    {% endif %}
+                    {% if user == blogger %}
+                        <a href="{% url 'blog:profile-update' %}" class="btn btn-primary btn-sm mb-3">
+                            <i class="bi bi-pencil me-2"></i>Edit Profile
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">About {{ blogger.get_full_name|default:blogger.username }}</h3>
+                </div>
+                <div class="card-body">
+                    {% if blogger.profile.bio %}
+                        <p class="card-text">{{ blogger.profile.bio }}</p>
+                    {% else %}
+                        <p class="text-muted">No bio available</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3 class="mb-0">Latest Posts</h3>
+                </div>
+                <div class="card-body">
+                    {% if posts %}
+                        <div class="list-group list-group-flush">
+                            {% for post in posts %}
+                                <div class="list-group-item">
+                                    <h4 class="mb-2">
+                                        <a href="{% url 'blog:post-detail' post.pk %}" class="text-decoration-none">
+                                            {{ post.title }}
+                                        </a>
+                                    </h4>
+                                    <small class="text-muted">
+                                        {{ post.date_posted|date:"F d, Y" }}
+                                    </small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-journal-text display-4 text-muted mb-3 d-block"></i>
+                            <p class="text-muted mb-0">No posts yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

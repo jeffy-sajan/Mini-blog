@@ -1,3 +1,4 @@
+
 """
 Django settings for mini_blog project.
 
